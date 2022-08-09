@@ -24,7 +24,7 @@
   <depend>vesc_msgs</depend>
   <depend>serial_driver</depend>
   <depend>sensor_msgs</depend>
-
+  <depend>robosw</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

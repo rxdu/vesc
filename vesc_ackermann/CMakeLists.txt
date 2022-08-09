@@ -13,6 +13,8 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
+find_package(ackermann_msgs REQUIRED)
+
 ###########
 ## Build ##
 ###########

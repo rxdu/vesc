@@ -14,6 +14,8 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 find_package(Threads)
+find_package(serial_driver REQUIRED)
+find_package(robosw REQUIRED)
 
 ###########
 ## Build ##
@@ -22,16 +24,24 @@ find_package(Threads)
 # node library
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/vesc_driver.cpp
+  src/vesc_can_driver.cpp
   src/vesc_interface.cpp
   src/vesc_packet.cpp
   src/vesc_packet_factory.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${CMAKE_THREAD_LIBS_INIT}
+  robosw::driver
 )
+
 rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN vesc_driver::VescDriver
   EXECUTABLE ${PROJECT_NAME}_node
+)
+
+rclcpp_components_register_node(${PROJECT_NAME}
+  PLUGIN vesc_driver::VescCanDriver
+  EXECUTABLE ${PROJECT_NAME}_can_node
 )
 
 ament_auto_add_executable(
