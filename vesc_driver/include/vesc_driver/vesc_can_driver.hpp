@@ -114,6 +114,8 @@ private:
 
   // other variables
   driver_mode_t driver_mode_;           ///< driver state machine mode (state)
+  uint8_t controller_id_ = 0;
+  bool state_msg_received_ = false;
   int fw_version_major_;                ///< firmware major version reported by vesc
   int fw_version_minor_;                ///< firmware minor version reported by vesc
 

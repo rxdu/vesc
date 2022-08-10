@@ -50,7 +50,7 @@ using vesc_msgs::msg::VescStateStamped;
 using sensor_msgs::msg::Imu;
 
 VescCanDriver::VescCanDriver(const rclcpp::NodeOptions & options)
-: rclcpp::Node("vesc can_driver", options),
+: rclcpp::Node("vesc_can_driver", options),
   duty_cycle_limit_(this, "duty_cycle", -1.0, 1.0),
   current_limit_(this, "current"),
   brake_limit_(this, "brake"),
@@ -62,15 +62,17 @@ VescCanDriver::VescCanDriver(const rclcpp::NodeOptions & options)
   fw_version_minor_(-1)
 {
   // get vesc serial port address
-  std::string port = declare_parameter<std::string>("port", "");
+  std::string port = declare_parameter<std::string>("port", "can0");
   vesc_.SetStateUpdatedCallback(std::bind(&VescCanDriver::VescStateUpdatedCallback, this, 
         std::placeholders::_1));
 
+  controller_id_ = declare_parameter<uint8_t>("vesc_id", 0x68);
+
   // attempt to connect to the serial port
   try {
-    vesc_.Connect(port, 0x68);
+    vesc_.Connect(port, controller_id_);
   } catch (...) {
-//     RCLCPP_FATAL(get_logger(), "Failed to connect to the VESC, %s.", e.what());
+    RCLCPP_FATAL(get_logger(), "Failed to connect to the VESC %x @ %s.", controller_id_, port.c_str());
     rclcpp::shutdown();
     return;
   }
@@ -103,6 +105,8 @@ VescCanDriver::VescCanDriver(const rclcpp::NodeOptions & options)
 
   // create a 50Hz timer, used for state machine & polling VESC telemetry
   timer_ = create_wall_timer(20ms, std::bind(&VescCanDriver::timerCallback, this));
+
+  RCLCPP_INFO(get_logger(), "VESC driver started, listening to node 0x%x @ %s.", controller_id_, port.c_str());
 }
 
 /* TODO or TO-THINKABOUT LIST
@@ -132,29 +136,25 @@ void VescCanDriver::timerCallback()
    *  INITIALIZING - request and wait for vesc version
    *  OPERATING - receiving commands from subscriber topics
    */
-//   if (driver_mode_ == MODE_INITIALIZING) {
-//     // request version number, return packet will update the internal version numbers
-//     vesc_.requestFWVersion();
-//     if (fw_version_major_ >= 0 && fw_version_minor_ >= 0) {
-//       RCLCPP_INFO(
-//         get_logger(), "Connected to VESC with firmware version %d.%d",
-//         fw_version_major_, fw_version_minor_);
-//       driver_mode_ = MODE_OPERATING;
-//     }
-//   } else if (driver_mode_ == MODE_OPERATING) {
-//     // poll for vesc state (telemetry)
-//     vesc_.requestState();
-//     // poll for vesc imu
-//     vesc_.requestImuData();
-//   } else {
-//     // unknown mode, how did that happen?
-//     assert(false && "unknown driver mode");
-//   }
+  if (driver_mode_ == MODE_INITIALIZING) {
+        if(state_msg_received_) {
+            driver_mode_ = MODE_OPERATING;
+            RCLCPP_INFO(get_logger(), "VESC driver initialized.");
+        }
+  } else if (driver_mode_ == MODE_OPERATING) {
+  } else {
+    // unknown mode, how did that happen?
+    assert(false && "unknown driver mode");
+  }
 }
 
 void VescCanDriver::VescStateUpdatedCallback(const robosw::StampedVescState &msg) {
     auto state_msg = VescStateStamped();
     state_msg.header.stamp = now();
+
+    if(!state_msg_received_) {
+        state_msg_received_ = true;
+    }
 
     state_msg.state.voltage_input = msg.state.voltage_input;
     state_msg.state.current_motor = msg.state.current_motor;
@@ -230,6 +230,7 @@ void VescCanDriver::speedCallback(const Float64::SharedPtr speed)
 {
   if (driver_mode_ = MODE_OPERATING) {
     vesc_.SetSpeed(speed_limit_.clip(speed->data));
+//     RCLCPP_INFO(get_logger(), "rpm cmd %f, %f.", speed->data, speed_limit_.clip(speed->data));
   }
 }
 
@@ -254,6 +255,8 @@ void VescCanDriver::servoCallback(const Float64::SharedPtr servo)
   if (driver_mode_ = MODE_OPERATING) {
     double servo_clipped(servo_limit_.clip(servo->data));
     vesc_.SetServo(servo_clipped);
+//     RCLCPP_INFO(get_logger(), "servo cmd %f.", servo->data);
+
     // publish clipped servo value as a "sensor"
     auto servo_sensor_msg = Float64();
     servo_sensor_msg.data = servo_clipped;
