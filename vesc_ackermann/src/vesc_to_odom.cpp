@@ -56,12 +56,17 @@ VescToOdom::VescToOdom(const rclcpp::NodeOptions & options)
   yaw_(0.0)
 {
   // get ROS parameters
-  odom_frame_ = declare_parameter("odom_frame", odom_frame_);
-  base_frame_ = declare_parameter("base_frame", base_frame_);
-  use_servo_cmd_ = declare_parameter("use_servo_cmd_to_calc_angular_velocity", use_servo_cmd_);
+  this->declare_parameter<std::string>("odom_frame", "odom");
+  this->declare_parameter<std::string>("base_frame", "base_link");
+  this->declare_parameter<bool>("use_servo_cmd_to_calc_angular_velocity");
+  odom_frame_ = get_parameter("odom_frame", odom_frame_);
+  base_frame_ = get_parameter("base_frame", base_frame_);
+  use_servo_cmd_ = get_parameter("use_servo_cmd_to_calc_angular_velocity", use_servo_cmd_);
 
 //   speed_to_erpm_gain_ = declare_parameter("speed_to_erpm_gain").get<double>();
 //   speed_to_erpm_offset_ = declare_parameter("speed_to_erpm_offset").get<double>();
+  this->declare_parameter<double>("speed_to_erpm_gain", 0.0);
+  this->declare_parameter<double>("speed_to_erpm_offset", 0.0);
   this->get_parameter("speed_to_erpm_gain", speed_to_erpm_gain_);
   this->get_parameter("speed_to_erpm_offset", speed_to_erpm_offset_);
 
@@ -70,11 +75,15 @@ VescToOdom::VescToOdom(const rclcpp::NodeOptions & options)
 //     steering_to_servo_gain_ = declare_parameter("steering_angle_to_servo_gain").get<double>();
 //     steering_to_servo_offset_ = declare_parameter("steering_angle_to_servo_offset").get<double>();
 //     wheelbase_ = declare_parameter("wheelbase").get<double>();
+    this->declare_parameter<double>("steering_angle_to_servo_gain", 0.0);
+    this->declare_parameter<double>("steering_angle_to_servo_offset", 0.0);
+    this->declare_parameter<double>("wheelbase", 0.0);
     this->get_parameter("steering_angle_to_servo_gain", steering_to_servo_gain_);
     this->get_parameter("steering_angle_to_servo_offset", steering_to_servo_offset_);
     this->get_parameter("wheelbase", wheelbase_);
   }
 
+  this->declare_parameter<bool>("publish_tf", true);
   publish_tf_ = get_parameter("publish_tf", publish_tf_);
 
   // create odom publisher
