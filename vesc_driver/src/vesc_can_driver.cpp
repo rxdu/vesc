@@ -49,8 +49,8 @@ using std_msgs::msg::Float64;
 using vesc_msgs::msg::VescStateStamped;
 using sensor_msgs::msg::Imu;
 
-VescCanDriver::VescCanDriver(const rclcpp::NodeOptions & options)
-: rclcpp::Node("vesc_can_driver", options),
+VescCanDriver::VescCanDriver()
+: rclcpp::Node("vesc_can_driver"),
   duty_cycle_limit_(this, "duty_cycle", -1.0, 1.0),
   current_limit_(this, "current"),
   brake_limit_(this, "brake"),
@@ -366,6 +366,6 @@ double VescCanDriver::CommandLimit::clip(double value)
 
 }  // namespace vesc_driver
 
-#include "rclcpp_components/register_node_macro.hpp"  // NOLINT
+// #include "rclcpp_components/register_node_macro.hpp"  // NOLINT
 
-RCLCPP_COMPONENTS_REGISTER_NODE(vesc_driver::VescCanDriver)
+// RCLCPP_COMPONENTS_REGISTER_NODE(vesc_driver::VescCanDriver)

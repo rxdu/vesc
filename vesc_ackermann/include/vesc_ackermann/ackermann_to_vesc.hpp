@@ -48,6 +48,8 @@ public:
 
 private:
   // ROS parameters
+  bool enable_cmd_smoother_;
+
   // conversion gain and offset
   double speed_to_erpm_gain_, speed_to_erpm_offset_;
   double steering_to_servo_gain_, steering_to_servo_offset_;
