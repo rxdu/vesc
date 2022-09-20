@@ -39,9 +39,17 @@ rclcpp_components_register_node(${PROJECT_NAME}
   EXECUTABLE ${PROJECT_NAME}_node
 )
 
-rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN vesc_driver::VescCanDriver
-  EXECUTABLE ${PROJECT_NAME}_can_node
+# rclcpp_components_register_node(${PROJECT_NAME}
+#   PLUGIN vesc_driver::VescCanDriver
+#   EXECUTABLE ${PROJECT_NAME}_can_node
+# )
+
+add_executable(vesc_driver_can_node 
+  src/vesc_can_driver_node.cpp
+)
+target_link_libraries(vesc_driver_can_node
+  ${CMAKE_THREAD_LIBS_INIT}
+  ${PROJECT_NAME}
 )
 
 ament_auto_add_executable(
@@ -58,6 +66,10 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
 endif()
+
+install(TARGETS
+  vesc_driver_can_node
+  DESTINATION lib/${PROJECT_NAME})
 
 ament_auto_package(
   INSTALL_TO_SHARE

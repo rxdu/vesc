@@ -49,19 +49,26 @@ AckermannToVesc::AckermannToVesc(const rclcpp::NodeOptions & options)
 : Node("ackermann_to_vesc_node", options)
 {
   // get conversion parameters
+  this->declare_parameter<bool>("enable_cmd_smoother", true);
   this->declare_parameter<double>("speed_to_erpm_gain", 0.0);
   this->declare_parameter<double>("speed_to_erpm_offset", 0.0);
   this->declare_parameter<double>("steering_angle_to_servo_gain", 0.0);
   this->declare_parameter<double>("steering_angle_to_servo_offset", 0.0);
 
+  this->get_parameter("enable_cmd_smoother", enable_cmd_smoother_);
   this->get_parameter("speed_to_erpm_gain", speed_to_erpm_gain_);
   this->get_parameter("speed_to_erpm_offset", speed_to_erpm_offset_);
   this->get_parameter("steering_angle_to_servo_gain", steering_to_servo_gain_);
   this->get_parameter("steering_angle_to_servo_offset", steering_to_servo_offset_);
 
   // create publishers to vesc electric-RPM (speed) and servo commands
-  erpm_pub_ = create_publisher<Float64>("commands/motor/speed", 10);
-  servo_pub_ = create_publisher<Float64>("commands/servo/position", 10);
+  if(enable_cmd_smoother_) {
+        erpm_pub_ = create_publisher<Float64>("commands/motor/unsmoothed_speed", 10);
+        servo_pub_ = create_publisher<Float64>("commands/servo/unsmoothed_position", 10);
+  } else {
+        erpm_pub_ = create_publisher<Float64>("commands/motor/speed", 10);
+        servo_pub_ = create_publisher<Float64>("commands/servo/position", 10);
+  } 
 
   RCLCPP_INFO(get_logger(),"speed: %f, %f, steer: %f, %f\n", 
         speed_to_erpm_gain_,speed_to_erpm_offset_,

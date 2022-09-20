@@ -57,7 +57,7 @@ class VescCanDriver
   : public rclcpp::Node
 {
 public:
-  explicit VescCanDriver(const rclcpp::NodeOptions & options);
+  VescCanDriver();
 
 private:
   // interface to the VESC
