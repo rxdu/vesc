@@ -68,15 +68,6 @@ VescCanDriver::VescCanDriver()
 
   controller_id_ = declare_parameter<uint8_t>("vesc_id", 0x68);
 
-  // attempt to connect to the serial port
-  try {
-    vesc_.Connect(port, controller_id_);
-  } catch (...) {
-    RCLCPP_FATAL(get_logger(), "Failed to connect to the VESC %x @ %s.", controller_id_, port.c_str());
-    rclcpp::shutdown();
-    return;
-  }
-
   // create vesc state (telemetry) publisher
   state_pub_ = create_publisher<VescStateStamped>("sensors/core", rclcpp::QoS{10});
   imu_pub_ = create_publisher<VescImuStamped>("sensors/imu", rclcpp::QoS{10});
@@ -102,6 +93,15 @@ VescCanDriver::VescCanDriver()
     "commands/motor/position", rclcpp::QoS{10}, std::bind(&VescCanDriver::positionCallback, this, _1));
   servo_sub_ = create_subscription<Float64>(
     "commands/servo/position", rclcpp::QoS{10}, std::bind(&VescCanDriver::servoCallback, this, _1));
+
+  // attempt to connect to the serial port
+  try {
+    vesc_.Connect(port, controller_id_);
+  } catch (...) {
+    RCLCPP_FATAL(get_logger(), "Failed to connect to the VESC %x @ %s.", controller_id_, port.c_str());
+    rclcpp::shutdown();
+    return;
+  }
 
   // create a 50Hz timer, used for state machine & polling VESC telemetry
   timer_ = create_wall_timer(20ms, std::bind(&VescCanDriver::timerCallback, this));
